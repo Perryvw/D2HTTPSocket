@@ -28,7 +28,7 @@ package {
 		
 		public function onLoaded() {
 			//connect the socket D2HTTPSocket( hostName:string, hostIP:string )
-			sock = new D2HTTPSocket('*****.**', '***.**.***.***');
+			sock = new D2HTTPSocket('someHost.eu', '000.111.222.333');
 			//get dota/index.html
 			sock.getDataAsync('dota/', callback1);
 		}
