@@ -4,13 +4,13 @@
 	Example usage of the D2HTTPSocket class, used for requesting a file from a webserver,
 	and sending the string 'data-abc' to domain.ext/dota/test.php.
 */
-package  {
+package {
 	
 	import flash.display.MovieClip;
 	import flash.net.Socket;
 	import flash.events.*;
 	import flash.errors.IOError;
-	import D2HTTPSocket;
+	import dota2Net.D2HTTPSocket;
 	
 	
 	public class sockethttp extends MovieClip {
@@ -27,6 +27,7 @@ package  {
 		}
 		
 		public function onLoaded() {
+			//connect the socket D2HTTPSocket( hostName:string, hostIP:string )
 			sock = new D2HTTPSocket('*****.**', '***.**.***.***');
 			//get dota/index.html
 			sock.getDataAsync('dota/', callback1);

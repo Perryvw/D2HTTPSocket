@@ -5,7 +5,7 @@ returned asynchronously.
 
 Author: Perry
 */
-package {
+package dota2Net {
 	import flash.net.Socket;
 	import flash.errors.IOError;
 	import flash.events.Event;
@@ -48,6 +48,9 @@ package {
 		}
 		
 		//Send a POST request with some data to the specified path
+		//Parameters:	path:String - The path of the page to send the request to
+		//				data:String - The data to send with the POST request
+		//				callback:Function - Callback that is executed once data is returned (optional but recommended)
 		public function postDataAsync( path:String, data:String, callback:Function = null ) : void {
 			//connect
 			trace('opening socket');
@@ -62,6 +65,8 @@ package {
 		}
 		
 		//Send a GET request for some data
+		//Parameters:	path:String - The path of the page to send the request to
+		//				callback:Function - Callback that is executed once data is returned
 		public function getDataAsync( path:String, callback:Function ) : void {
 			//connect
 			connect( hostIP, port );
