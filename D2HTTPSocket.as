@@ -31,6 +31,7 @@ package dota2Net {
 		
 		private var path:String;
 		private var data:String;
+		private var postContentType:String;
 		
 		
 		//===========PUBLIC SECTION - INTERFACE ============
@@ -51,13 +52,15 @@ package dota2Net {
 		//Parameters:	path:String - The path of the page to send the request to
 		//				data:String - The data to send with the POST request
 		//				callback:Function - Callback that is executed once data is returned (optional but recommended)
-		public function postDataAsync( path:String, data:String, callback:Function = null ) : void {
+		//				contentType:String - The Content-Type header to be used (optional)
+		public function postDataAsync( path:String, data:String, callback:Function = null, contentType:String = 'application/x-www-form-urlencoded' ) : void {
 			//connect
 			trace('opening socket');
 			connect( hostIP, port );
 			
 			this.path = path;
 			this.data = data;
+			this.postContentType = contentType;
 			this.callback = callback;
 			
 			//check if the socket is connected
@@ -90,7 +93,7 @@ package dota2Net {
 			//Write data to socket
 			writeStrToSocket("POST /"+path+" HTTP/1.0\r\n");
 			writeStrToSocket("Host: "+hostName+"\r\n");
-			writeStrToSocket("Content-Type: text/plain\r\n");
+			writeStrToSocket("Content-Type: "+postContentType+"\r\n");
 			writeStrToSocket("Content-Length: "+data.length+"\r\n\r\n");
 			writeStrToSocket(data);
 			flush();
