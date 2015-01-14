@@ -23,7 +23,7 @@ package dota2Net {
 		private var port:int = 80;
 		
 		//internal variables
-		private var currentJob:Function;
+		private var currentJob:Object = null;
 		private var isConnected:Boolean = false;
 		private var checkProgress:Boolean = false;
 		private var responseMsg:String = "";
@@ -32,6 +32,10 @@ package dota2Net {
 		private var path:String;
 		private var data:String;
 		private var postContentType:String;
+		
+		private var TYPE_POST:int = 1;
+		private var TYPE_GET:int = 2;
+		private var httpQueue:Array = new Array();
 		
 		
 		//===========PUBLIC SECTION - INTERFACE ============
@@ -52,10 +56,16 @@ package dota2Net {
 		//Parameters:	path:String - The path of the page to send the request to
 		//				data:String - The data to send with the POST request
 		//				callback:Function - Callback that is executed once data is returned (optional but recommended)
-		//				contentType:String - The Content-Type header to be used (optional)
+		//              contentType:String - The Content-Type header to be used (optional)
 		public function postDataAsync( path:String, data:String, callback:Function = null, contentType:String = 'application/x-www-form-urlencoded' ) : void {
+			if (this.currentJob != null){
+				httpQueue.push({"type":TYPE_POST, "path":path, "data":data, "callback":callback, "contentType":contentType});
+				return;
+			}
+			
 			//connect
 			trace('opening socket');
+			this.currentJob = {"type":TYPE_POST, "path":path, "data":data, "callback":callback, "contentType":contentType};
 			connect( hostIP, port );
 			
 			this.path = path;
@@ -71,7 +81,13 @@ package dota2Net {
 		//Parameters:	path:String - The path of the page to send the request to
 		//				callback:Function - Callback that is executed once data is returned
 		public function getDataAsync( path:String, callback:Function ) : void {
+			if (this.currentJob != null){
+				httpQueue.push({"type":TYPE_GET, "path":path, "data":null, "callback":callback});
+				return;
+			}
+			
 			//connect
+			this.currentJob = {"type":TYPE_GET, "path":path, "data":null, "callback":callback};
 			connect( hostIP, port );
 			
 			this.path = path;
@@ -127,7 +143,7 @@ package dota2Net {
 					close();
 					
 					//return data to the callback if it exists
-					if (callback) {
+					if (callback != null) {
 						//check if we got a correct response
 						var statusCode = parseInt(responseMsg.split("\r\n")[0].split(" ")[1]);
 						
@@ -137,10 +153,46 @@ package dota2Net {
 						//response message
 						callback( statusCode, msg );
 					}
+					
+					this.currentJob = null;
+					checkQueue();
 				} else {
 					//if there is data available, read it
 					readSocket();
 				}
+			}
+		}
+		
+		private function checkQueue(){
+			trace("queuelen: " + this.httpQueue.length);
+			if (this.httpQueue.length == 0)
+				return;
+				
+			trace("popping queue");
+			this.currentJob = this.httpQueue.shift();
+			
+			if (this.currentJob.type == TYPE_GET){
+				//connect
+				connect( hostIP, port );
+				
+				this.path = this.currentJob.path;
+				this.callback = this.currentJob.callback;
+				
+				//check if the socket is connected
+				addEventListener(Event.CONNECT, getDataCallback);
+			}
+			else if (this.currentJob.type == TYPE_POST){
+				//connect
+				trace('opening socket');
+				connect( hostIP, port );
+				
+				this.path = this.currentJob.path;
+				this.data = this.currentJob.data;
+				this.postContentType = this.currentJob.contentType;
+				this.callback = this.currentJob.callback;
+				
+				//check if the socket is connected
+				addEventListener(Event.CONNECT, postDataCallback);
 			}
 		}
 		
