@@ -3,7 +3,11 @@ Implementation of a basic version of the HTTP protocol, allowing POST
 and GET requests to a webserver from within the dota 2 UI. All data is
 returned asynchronously.
 
+Update: Now contains a queueing system that will accept requests even when
+the callback of the previous request has not fired yet.
+
 Author: Perry
+Contributors: BMD
 */
 package dota2Net {
 	import flash.net.Socket;
@@ -56,7 +60,7 @@ package dota2Net {
 		//Parameters:	path:String - The path of the page to send the request to
 		//				data:String - The data to send with the POST request
 		//				callback:Function - Callback that is executed once data is returned (optional but recommended)
-		//              contentType:String - The Content-Type header to be used (optional)
+		//				contentType:String - The Content-Type header to be used (optional)
 		public function postDataAsync( path:String, data:String, callback:Function = null, contentType:String = 'application/x-www-form-urlencoded' ) : void {
 			if (this.currentJob != null){
 				httpQueue.push({"type":TYPE_POST, "path":path, "data":data, "callback":callback, "contentType":contentType});
@@ -64,7 +68,6 @@ package dota2Net {
 			}
 			
 			//connect
-			trace('opening socket');
 			this.currentJob = {"type":TYPE_POST, "path":path, "data":data, "callback":callback, "contentType":contentType};
 			connect( hostIP, port );
 			
@@ -98,6 +101,7 @@ package dota2Net {
 		}
 		
 		//====== PRIVATE SECTION - INTERNAL WORKINGS ===========
+		//Callback for when the socket has connected to send a POST request
 		private function postDataCallback() : void {
 			removeEventListener(Event.CONNECT, postDataCallback);
 			
@@ -115,6 +119,7 @@ package dota2Net {
 			flush();
 		}
 		
+		//Callback for when the socket has connected for a GET request
 		private function getDataCallback() : void {
 			removeEventListener(Event.CONNECT, getDataCallback);
 			//reset response message
@@ -163,14 +168,18 @@ package dota2Net {
 			}
 		}
 		
+		//Check the request-queue to see if there are any other requests that have to be made
 		private function checkQueue(){
-			trace("queuelen: " + this.httpQueue.length);
+			//trace("queuelen: " + this.httpQueue.length);
+			
+			//No requests
 			if (this.httpQueue.length == 0)
 				return;
 				
-			trace("popping queue");
+			//Pop the queue
 			this.currentJob = this.httpQueue.shift();
 			
+			//Handle different types of requests
 			if (this.currentJob.type == TYPE_GET){
 				//connect
 				connect( hostIP, port );
@@ -183,7 +192,6 @@ package dota2Net {
 			}
 			else if (this.currentJob.type == TYPE_POST){
 				//connect
-				trace('opening socket');
 				connect( hostIP, port );
 				
 				this.path = this.currentJob.path;
