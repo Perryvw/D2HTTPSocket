@@ -156,7 +156,12 @@ package dota2Net {
 						
 						//call the callback with the status and the
 						//response message
-						callback( statusCode, msg );
+						try{
+							callback( statusCode, msg );
+						}
+						catch(e:Error){
+							trace(e.toString());
+						}
 					}
 					
 					this.currentJob = null;
